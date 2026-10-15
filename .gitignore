@@ -35,6 +35,17 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# AI agents and tools
+.agents/
+.claude/
+.cursor/
+.devin/
+.junie/
+.windsurf/
+.copilot/
+.cline/
+.roo/
+
 # dotenv environment variable files
 .env
 .env.development.local
@@ -56,3 +67,5 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /TECHNICAL_SPECIFICATION.md
+node_modules/
+dist/
