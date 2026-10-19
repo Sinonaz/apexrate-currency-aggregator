@@ -4,11 +4,16 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AssetsModule } from './assets/assets.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { PriceSyncService } from './price-sync/price-sync.service';
+import { PriceSyncModule } from './price-sync/price-sync.module';
 
 @Module({
-  imports: [PrismaModule, AssetsModule, ScheduleModule.forRoot()],
+  imports: [
+    PrismaModule,
+    AssetsModule,
+    ScheduleModule.forRoot(),
+    PriceSyncModule,
+  ],
   controllers: [AppController],
-  providers: [AppService, PriceSyncService],
+  providers: [AppService],
 })
 export class AppModule {}
