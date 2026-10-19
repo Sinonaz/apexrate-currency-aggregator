@@ -1,13 +1,20 @@
-// use prisma-8
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
 model Asset {
-  id           String               @id @default(uuid())
-  symbol       String               @unique
+  id           String       @id @default(uuid())
+  symbol       String       @unique
   name         String
   providerId   String
-  currentPrice Float                @default(0)
-  change24h    Float                @default(0)
-  updatedAt    temporal.updatedAt()
-  createdAt    DateTime             @default(now())
+  currentPrice Float        @default(0)
+  change24h    Float        @default(0)
+  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime     @default(now())
 
   history      PricePoint[]
   alerts       PriceAlert[]
@@ -28,9 +35,8 @@ model PricePoint {
 }
 
 enum AlertCondition {
-  @@type("pg/text@1")
-  ABOVE = "ABOVE"
-  BELOW = "BELOW"
+  ABOVE
+  BELOW
 }
 
 model PriceAlert {

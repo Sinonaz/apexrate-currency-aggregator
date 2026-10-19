@@ -1,4 +1,11 @@
-import { db } from './db';
+import 'dotenv/config';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
+
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!,
+});
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const defaultAssets = [
@@ -40,18 +47,15 @@ async function main() {
   ];
 
   for (const a of defaultAssets) {
-    const existing = await db.orm.public.Asset.where({
-      symbol: a.symbol,
-    }).first();
-    if (existing) {
-      await db.orm.public.Asset.where({ symbol: a.symbol }).update(a);
-    } else {
-      await db.orm.public.Asset.create(a);
-    }
+    await prisma.asset.upsert({
+      where: { symbol: a.symbol },
+      update: a,
+      create: a,
+    });
   }
   console.log('Seed completed successfully!');
 }
 
 main()
   .catch((e) => console.error(e))
-  .finally(async () => await db.close());
+  .finally(async () => await prisma.$disconnect());
