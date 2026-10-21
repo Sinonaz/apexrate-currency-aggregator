@@ -3,6 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
 import { Cron } from '@nestjs/schedule';
 import { firstValueFrom } from 'rxjs';
+import { AssetType } from '../assets/enums/asset-type.enum';
+import { FiatRateService } from './fiat-rate.service';
 
 interface CoinGeckoPriceResponse {
   [providerId: string]: {
@@ -14,25 +16,32 @@ interface CoinGeckoPriceResponse {
 @Injectable()
 export class PriceSyncService {
   private readonly logger = new Logger(PriceSyncService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly httpService: HttpService,
+    private readonly fiatRateService: FiatRateService,
   ) {}
 
   @Cron('*/5 * * * *')
   async syncPrices() {
     this.logger.log('Syncing prices');
 
+    await Promise.allSettled([this.syncCryptoPrices(), this.syncFiatPrices()]);
+  }
+
+  async syncCryptoPrices() {
     try {
-      const assets = await this.prisma.asset.findMany();
+      const cryptoAssets = await this.prisma.asset.findMany({
+        where: { type: AssetType.CRYPTO },
+      });
 
-      if (assets.length === 0) {
-        this.logger.warn('No assets found');
-
+      if (cryptoAssets.length === 0) {
+        this.logger.warn('No crypto assets found');
         return;
       }
 
-      const ids = assets.map((asset) => asset.providerId).join(',');
+      const ids = cryptoAssets.map((asset) => asset.providerId).join(',');
       const { data } = await firstValueFrom(
         this.httpService.get<CoinGeckoPriceResponse>('simple/price', {
           params: {
@@ -43,12 +52,13 @@ export class PriceSyncService {
         }),
       );
 
-      for (const asset of assets) {
+      for (const asset of cryptoAssets) {
         const coinData = data[asset.providerId];
 
         if (!coinData || coinData.usd === undefined) {
-          this.logger.warn(`No price data found for asset ${asset.providerId}`);
-
+          this.logger.warn(
+            `No price data found for crypto asset ${asset.providerId}`,
+          );
           continue;
         }
 
@@ -73,10 +83,93 @@ export class PriceSyncService {
           }),
         ]);
 
-        this.logger.debug(`Price data synced for asset ${asset.providerId}`);
+        this.logger.debug(
+          `Price data synced for crypto asset ${asset.providerId}`,
+        );
       }
-    } catch (e) {
-      this.logger.error(e);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      const stack = e instanceof Error ? e.stack : undefined;
+      this.logger.error(`Error syncing crypto prices: ${message}`, stack);
+    }
+  }
+
+  async syncFiatPrices() {
+    try {
+      const fiatAssets = await this.prisma.asset.findMany({
+        where: { type: AssetType.FIAT },
+      });
+
+      if (fiatAssets.length === 0) {
+        this.logger.warn('No fiat assets found');
+        return;
+      }
+
+      const rates = await this.fiatRateService.getLatestRates();
+
+      for (const asset of fiatAssets) {
+        const currencyKey = asset.providerId.toUpperCase();
+        const rate = rates[currencyKey];
+
+        if (rate === undefined || rate === null) {
+          this.logger.warn(
+            `No price data found for fiat asset ${asset.providerId} (key: ${currencyKey})`,
+          );
+          continue;
+        }
+
+        const currentPrice = rate;
+
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        let prevPricePoint = await this.prisma.pricePoint.findFirst({
+          where: {
+            assetId: asset.id,
+            timestamp: { lte: twentyFourHoursAgo },
+          },
+          orderBy: { timestamp: 'desc' },
+        });
+
+        if (!prevPricePoint) {
+          prevPricePoint = await this.prisma.pricePoint.findFirst({
+            where: { assetId: asset.id },
+            orderBy: { timestamp: 'asc' },
+          });
+        }
+
+        let change24h = 0;
+        if (prevPricePoint && prevPricePoint.price > 0) {
+          change24h =
+            ((currentPrice - prevPricePoint.price) / prevPricePoint.price) *
+            100;
+          change24h = Math.round(change24h * 100) / 100;
+        }
+
+        await this.prisma.$transaction([
+          this.prisma.asset.update({
+            where: {
+              id: asset.id,
+            },
+            data: {
+              currentPrice,
+              change24h,
+            },
+          }),
+          this.prisma.pricePoint.create({
+            data: {
+              assetId: asset.id,
+              price: currentPrice,
+            },
+          }),
+        ]);
+
+        this.logger.debug(
+          `Price data synced for fiat asset ${asset.providerId}`,
+        );
+      }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      const stack = e instanceof Error ? e.stack : undefined;
+      this.logger.error(`Error syncing fiat prices: ${message}`, stack);
     }
   }
 }

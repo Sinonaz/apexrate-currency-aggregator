@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PriceSyncService } from './price-sync.service';
+import { FiatRateService } from './fiat-rate.service';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -16,7 +17,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       inject: [ConfigService],
     }),
   ],
-  providers: [PriceSyncService],
-  exports: [PriceSyncService],
+  providers: [PriceSyncService, FiatRateService],
+  exports: [PriceSyncService, FiatRateService],
 })
 export class PriceSyncModule {}

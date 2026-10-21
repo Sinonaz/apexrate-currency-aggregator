@@ -6,10 +6,16 @@ datasource db {
   provider = "postgresql"
 }
 
+enum AssetType {
+  CRYPTO
+  FIAT
+}
+
 model Asset {
   id           String       @id @default(uuid())
   symbol       String       @unique
   name         String
+  type         AssetType    @default(CRYPTO)
   providerId   String
   currentPrice Float        @default(0)
   change24h    Float        @default(0)
