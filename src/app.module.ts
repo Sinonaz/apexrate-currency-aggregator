@@ -7,6 +7,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { PriceSyncModule } from './price-sync/price-sync.module';
 import { ConfigModule } from '@nestjs/config';
 import { AlertsModule } from './alerts/alerts.module';
+import { TelegramModule } from './telegram/telegram.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AlertsModule } from './alerts/alerts.module';
     ScheduleModule.forRoot(),
     PriceSyncModule,
     AlertsModule,
+    TelegramModule,
   ],
   controllers: [AppController],
   providers: [AppService],
