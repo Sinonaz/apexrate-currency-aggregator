@@ -19,7 +19,7 @@ export class PriceSyncService {
     private readonly httpService: HttpService,
   ) {}
 
-  @Cron('*/2 * * * *')
+  @Cron('*/5 * * * *')
   async syncPrices() {
     this.logger.log('Syncing prices');
 
