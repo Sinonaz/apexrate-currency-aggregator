@@ -6,6 +6,7 @@ import { AssetsModule } from './assets/assets.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PriceSyncModule } from './price-sync/price-sync.module';
 import { ConfigModule } from '@nestjs/config';
+import { AlertsModule } from './alerts/alerts.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ConfigModule } from '@nestjs/config';
     AssetsModule,
     ScheduleModule.forRoot(),
     PriceSyncModule,
+    AlertsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

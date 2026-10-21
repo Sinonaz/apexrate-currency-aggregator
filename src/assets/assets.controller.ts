@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { AssetsService } from './assets.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { GetAssetHistoryDto } from './dto/get-asset-history.dto';
@@ -23,10 +31,7 @@ export class AssetsController {
   }
 
   @Get(':id/history')
-  getAssetHistory(
-    @Param('id') id: string,
-    @Query() query: GetAssetHistoryDto,
-  ) {
+  getAssetHistory(@Param('id') id: string, @Query() query: GetAssetHistoryDto) {
     return this.assetsService.getAssetHistory(id, query.timeframe);
   }
 }
