@@ -54,7 +54,7 @@ export class PriceSyncService {
           params: {
             ids,
             vs_currencies: 'usd',
-            include_24h_change: true,
+            include_24hr_change: true,
           },
         }),
       );
@@ -190,7 +190,7 @@ export class PriceSyncService {
           params: {
             ids: normalizedId,
             vs_currencies: 'usd',
-            include_24h_change: true,
+            include_24hr_change: true,
           },
         }),
       );
