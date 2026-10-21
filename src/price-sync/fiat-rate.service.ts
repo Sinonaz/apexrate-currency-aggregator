@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { FIAT_HTTP_SERVICE } from './price-sync.constants';
 
 export interface ExchangeRateApiResponse {
   result: string;
@@ -18,14 +19,15 @@ export interface ExchangeRateApiResponse {
 @Injectable()
 export class FiatRateService {
   private readonly logger = new Logger(FiatRateService.name);
-  private readonly apiUrl = 'https://open.er-api.com/v6/latest/USD';
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    @Inject(FIAT_HTTP_SERVICE) private readonly httpService: HttpService,
+  ) {}
 
   async getLatestRates(): Promise<Record<string, number>> {
     try {
       const { data } = await firstValueFrom(
-        this.httpService.get<ExchangeRateApiResponse>(this.apiUrl),
+        this.httpService.get<ExchangeRateApiResponse>('latest/USD'),
       );
 
       if (data.result !== 'success' || !data.rates) {

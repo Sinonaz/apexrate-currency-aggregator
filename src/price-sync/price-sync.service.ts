@@ -1,10 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
 import { Cron } from '@nestjs/schedule';
 import { firstValueFrom } from 'rxjs';
 import { AssetType } from '../assets/enums/asset-type.enum';
 import { FiatRateService } from './fiat-rate.service';
+import { CRYPTO_HTTP_SERVICE } from './price-sync.constants';
 
 interface CoinGeckoPriceResponse {
   [providerId: string]: {
@@ -19,7 +20,7 @@ export class PriceSyncService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly httpService: HttpService,
+    @Inject(CRYPTO_HTTP_SERVICE) private readonly httpService: HttpService,
     private readonly fiatRateService: FiatRateService,
   ) {}
 
