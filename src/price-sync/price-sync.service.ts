@@ -14,6 +14,12 @@ interface CoinGeckoPriceResponse {
   };
 }
 
+export interface AssetValidationResult {
+  exists: boolean;
+  currentPrice?: number;
+  change24h?: number;
+}
+
 @Injectable()
 export class PriceSyncService {
   private readonly logger = new Logger(PriceSyncService.name);
@@ -171,6 +177,66 @@ export class PriceSyncService {
       const message = e instanceof Error ? e.message : String(e);
       const stack = e instanceof Error ? e.stack : undefined;
       this.logger.error(`Error syncing fiat prices: ${message}`, stack);
+    }
+  }
+
+  async validateAndFetchCrypto(
+    providerId: string,
+  ): Promise<AssetValidationResult> {
+    try {
+      const normalizedId = providerId.trim().toLowerCase();
+      const { data } = await firstValueFrom(
+        this.httpService.get<CoinGeckoPriceResponse>('simple/price', {
+          params: {
+            ids: normalizedId,
+            vs_currencies: 'usd',
+            include_24h_change: true,
+          },
+        }),
+      );
+
+      const coinData = data?.[normalizedId];
+      if (!coinData || coinData.usd === undefined || coinData.usd === null) {
+        return { exists: false };
+      }
+
+      return {
+        exists: true,
+        currentPrice: coinData.usd,
+        change24h: coinData.usd_24h_change ?? 0,
+      };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Failed to validate crypto providerId "${providerId}": ${message}`,
+      );
+      return { exists: false };
+    }
+  }
+
+  async validateAndFetchFiat(
+    providerId: string,
+  ): Promise<AssetValidationResult> {
+    try {
+      const rates = await this.fiatRateService.getLatestRates();
+      const currencyKey = providerId.trim().toUpperCase();
+      const rate = rates[currencyKey];
+
+      if (rate === undefined || rate === null) {
+        return { exists: false };
+      }
+
+      return {
+        exists: true,
+        currentPrice: rate,
+        change24h: 0,
+      };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Failed to validate fiat currency "${providerId}": ${message}`,
+      );
+      return { exists: false };
     }
   }
 }
