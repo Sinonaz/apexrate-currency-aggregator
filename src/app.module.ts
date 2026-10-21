@@ -8,6 +8,8 @@ import { PriceSyncModule } from './price-sync/price-sync.module';
 import { ConfigModule } from '@nestjs/config';
 import { AlertsModule } from './alerts/alerts.module';
 import { TelegramModule } from './telegram/telegram.module';
+import { APP_FILTER } from '@nestjs/core';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
 
 @Module({
   imports: [
@@ -20,6 +22,12 @@ import { TelegramModule } from './telegram/telegram.module';
     TelegramModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}
