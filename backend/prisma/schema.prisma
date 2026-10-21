@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AssetType {
+  CRYPTO
+  FIAT
+}
+
+model Asset {
+  id           String       @id @default(uuid())
+  symbol       String       @unique
+  name         String
+  type         AssetType    @default(CRYPTO)
+  providerId   String
+  currentPrice Float        @default(0)
+  change24h    Float        @default(0)
+  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime     @default(now())
+
+  history      PricePoint[]
+  alerts       PriceAlert[]
+
+  @@map("assets")
+}
+
+model PricePoint {
+  id        String   @id @default(uuid())
+  assetId   String
+  price     Float
+  timestamp DateTime @default(now())
+
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, timestamp])
+  @@map("price_points")
+}
+
+enum AlertCondition {
+  ABOVE
+  BELOW
+}
+
+model PriceAlert {
+  id             String         @id @default(uuid())
+  assetId        String
+  assetSymbol    String
+  targetPrice    Float
+  condition      AlertCondition
+  telegramChatId String
+  isTriggered    Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+
+  asset          Asset          @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@map("price_alerts")
+}
