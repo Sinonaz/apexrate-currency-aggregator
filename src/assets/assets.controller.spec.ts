@@ -9,6 +9,7 @@ describe('AssetsController', () => {
   const mockAssetsService = {
     getAssets: jest.fn(),
     createAsset: jest.fn(),
+    deleteAsset: jest.fn(),
     getAssetHistory: jest.fn(),
   };
 
@@ -29,6 +30,17 @@ describe('AssetsController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('deleteAsset', () => {
+    it('should call service.deleteAsset with id', async () => {
+      mockAssetsService.deleteAsset.mockResolvedValue({ success: true });
+
+      const result = await controller.deleteAsset('test-id');
+
+      expect(mockAssetsService.deleteAsset).toHaveBeenCalledWith('test-id');
+      expect(result).toEqual({ success: true });
+    });
   });
 
   describe('getAssetHistory', () => {

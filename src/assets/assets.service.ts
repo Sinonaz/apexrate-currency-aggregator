@@ -16,6 +16,13 @@ export class AssetsService {
     });
   }
 
+  async deleteAsset(id: string) {
+    await this.prisma.asset.delete({
+      where: { id },
+    });
+    return { success: true };
+  }
+
   async getAssetHistory(id: string, timeframe: string = '24h') {
     const now = new Date();
     let startDate: Date;

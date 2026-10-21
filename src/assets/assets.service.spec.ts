@@ -10,6 +10,7 @@ describe('AssetsService', () => {
     asset: {
       findMany: jest.fn(),
       create: jest.fn(),
+      delete: jest.fn(),
     },
     pricePoint: {
       findMany: jest.fn(),
@@ -33,6 +34,19 @@ describe('AssetsService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('deleteAsset', () => {
+    it('should delete asset by id and return success: true', async () => {
+      mockPrismaService.asset.delete.mockResolvedValue({ id: 'test-id' });
+
+      const result = await service.deleteAsset('test-id');
+
+      expect(mockPrismaService.asset.delete).toHaveBeenCalledWith({
+        where: { id: 'test-id' },
+      });
+      expect(result).toEqual({ success: true });
+    });
   });
 
   describe('getAssetHistory', () => {
