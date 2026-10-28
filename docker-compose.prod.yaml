@@ -32,6 +32,9 @@ services:
       PORT: 3000
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is not set}
+      COINGECKO_API_URL: ${COINGECKO_API_URL:-https://api.coingecko.com/api/v3/}
+      COINGECKO_API_KEY: ${COINGECKO_API_KEY:?COINGECKO_API_KEY is not set}
+      FIAT_API_URL: ${FIAT_API_URL:-https://open.er-api.com/v6/}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api >/dev/null || exit 1"]
       interval: 10s
