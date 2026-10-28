@@ -2,11 +2,11 @@ import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 
 export const useAppConfigStore = defineStore('appConfig', () => {
-  // Mock mode default to true so pet project frontend runs smoothly before backend is ready
+  // Mock mode is off by default; set VITE_MOCK_MODE=true in frontend/.env to start with mock data locally
   const isMockMode = ref<boolean>(
     localStorage.getItem('apexrate_mock_mode') !== null
       ? localStorage.getItem('apexrate_mock_mode') === 'true'
-      : true
+      : import.meta.env.VITE_MOCK_MODE === 'true'
   );
 
   // Dark mode by default for professional financial dashboard aesthetic
