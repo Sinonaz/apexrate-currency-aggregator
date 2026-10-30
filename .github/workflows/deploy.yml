@@ -72,6 +72,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v4
 
@@ -95,6 +98,9 @@ jobs:
             cd /srv/apexrate
             mv docker-compose.prod.yaml docker-compose.yaml
             export TAG=${{ github.sha }}
+            # GHCR images are private by default; the job token is valid only while the job runs.
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             docker compose pull
-            docker compose up -d --wait
+            docker logout ghcr.io
+            docker compose up -d --wait --remove-orphans
             docker image prune -f

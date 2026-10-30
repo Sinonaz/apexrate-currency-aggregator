@@ -1,0 +1,8 @@
+{
+	email {$ACME_EMAIL}
+}
+
+# One file per project: /srv/infra/sites/<project>.caddy
+# After adding or changing a file:
+#   docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+import sites/*.caddy

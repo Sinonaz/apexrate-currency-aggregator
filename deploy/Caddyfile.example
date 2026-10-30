@@ -1,7 +1,0 @@
-# Shared Caddy for all projects on the server (lives outside this repo, e.g. /srv/caddy/Caddyfile).
-# Caddy must be attached to the external `proxy` network.
-
-apexrate.example.com {
-    encode zstd gzip
-    reverse_proxy apexrate-frontend:80
-}

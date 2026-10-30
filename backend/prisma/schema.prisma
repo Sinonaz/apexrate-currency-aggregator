@@ -21,7 +21,6 @@ model Asset {
   change24h    Float        @default(0)
   updatedAt    DateTime     @updatedAt
   createdAt    DateTime     @default(now())
-
   history      PricePoint[]
   alerts       PriceAlert[]
 
@@ -33,7 +32,6 @@ model PricePoint {
   assetId   String
   price     Float
   timestamp DateTime @default(now())
-
   asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId, timestamp])
@@ -54,7 +52,6 @@ model PriceAlert {
   telegramChatId String
   isTriggered    Boolean        @default(false)
   createdAt      DateTime       @default(now())
-
   asset          Asset          @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@map("price_alerts")

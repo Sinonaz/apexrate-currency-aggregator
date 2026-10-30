@@ -250,7 +250,7 @@ Error format:
 │       ├── prisma/           # PrismaService, seed
 │       └── filters/          # global HTTP exception filter
 ├── frontend/                 # Vue 3 SPA + nginx (proxies /api to the backend)
-├── deploy/                   # Caddy config examples
+├── deploy/                   # server bootstrap, shared infra (Caddy + PostgreSQL), deploy guide
 ├── docker-compose.yaml       # run the whole stack locally
 ├── docker-compose.prod.yaml  # production: images from GHCR
 └── .github/workflows/        # CI/CD
@@ -275,9 +275,9 @@ On every push to `main`, GitHub Actions:
 3. Pushes them to GitHub Container Registry tagged `latest` and `<commit sha>`.
 4. Copies `docker-compose.prod.yaml` to the VPS over SSH, pulls the images and restarts the services, waiting for healthchecks (`docker compose up -d --wait`).
 
-In production neither PostgreSQL nor the backend publish ports. External traffic goes through a Caddy instance shared by all projects on the server (automatic HTTPS), which reaches the frontend container over the external `proxy` Docker network. Nginx inside the frontend container serves the SPA and proxies `/api` to the backend, so the frontend and the API share one origin and CORS is not needed.
+In production the project runs on top of a shared infra stack (`deploy/infra`) used by all projects on the server: one Caddy (automatic HTTPS) and one PostgreSQL instance where each project has its own role and database. Caddy reaches the frontend over the external `proxy` Docker network, the backend reaches PostgreSQL over the external `db` network; neither the backend nor the database publish ports. Nginx inside the frontend container serves the SPA and proxies `/api` to the backend, so the frontend and the API share one origin and CORS is not needed.
 
-Repository secrets: `SERVER_HOST`, `SERVER_USER`, `SSH_KEY`. The server needs `/srv/apexrate/.env`.
+Repository secrets: `SERVER_HOST`, `SERVER_USER`, `SSH_KEY`. The server needs `/srv/apexrate/.env`. Step-by-step server setup (in Russian): [deploy/README.md](deploy/README.md).
 
 ## Design decisions
 

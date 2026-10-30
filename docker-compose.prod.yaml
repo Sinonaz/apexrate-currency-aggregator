@@ -1,36 +1,20 @@
 # Production compose for the VDS. The CI pipeline copies it to /srv/apexrate/docker-compose.yaml.
 # Images come from GHCR; nothing is built on the server.
-# Required on the server: /srv/apexrate/.env and the external docker network `proxy` shared with Caddy.
+# Required on the server:
+#   - /srv/apexrate/.env (see deploy/apexrate.env.example)
+#   - the shared infra stack from deploy/infra running: it owns the `proxy` and `db` networks,
+#     Caddy and the PostgreSQL instance shared by all projects.
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: apexrate-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is not set}
-      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is not set}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set}
-    # No published ports: the database is reachable only from containers in this project.
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   backend:
     image: ghcr.io/sinonaz/apexrate-backend:${TAG:-latest}
     container_name: apexrate-backend
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      # Own role and database in the shared PostgreSQL, created by deploy/infra/scripts/create-db.sh.
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is not set}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is not set}
       COINGECKO_API_URL: ${COINGECKO_API_URL:-https://api.coingecko.com/api/v3/}
       COINGECKO_API_KEY: ${COINGECKO_API_KEY:?COINGECKO_API_KEY is not set}
@@ -41,6 +25,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - default
+      - db
 
   frontend:
     image: ghcr.io/sinonaz/apexrate-frontend:${TAG:-latest}
@@ -54,9 +41,8 @@ services:
       - default
       - proxy
 
-volumes:
-  postgres_data:
-
 networks:
   proxy:
+    external: true
+  db:
     external: true

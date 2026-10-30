@@ -249,7 +249,7 @@ curl -X POST http://localhost:3000/api/alerts \
 │       ├── prisma/           # PrismaService, seed
 │       └── filters/          # глобальный фильтр HTTP-исключений
 ├── frontend/                 # Vue 3 SPA + nginx (проксирует /api на бэкенд)
-├── deploy/                   # примеры конфигурации Caddy
+├── deploy/                   # настройка сервера, общая инфра (Caddy + PostgreSQL), инструкция
 ├── docker-compose.yaml       # локальный запуск всего стека
 ├── docker-compose.prod.yaml  # production: образы из GHCR
 └── .github/workflows/        # CI/CD
@@ -274,9 +274,9 @@ pnpm lint:check    # ESLint + Prettier
 3. Публикует их в GitHub Container Registry с тегами `latest` и `<commit sha>`.
 4. Копирует `docker-compose.prod.yaml` на VDS по SSH, подтягивает образы и перезапускает сервисы с ожиданием healthcheck (`docker compose up -d --wait`).
 
-В production PostgreSQL и бэкенд не публикуют порты наружу. Внешний трафик принимает общий для сервера Caddy (автоматический HTTPS), который ходит к контейнеру фронтенда по внешней Docker-сети `proxy`. Nginx внутри фронтенда раздаёт SPA и проксирует `/api` на бэкенд — фронтенд и API работают на одном origin, CORS не нужен.
+В production проект работает поверх общего для всех проектов сервера стека (`deploy/infra`): один Caddy (автоматический HTTPS) и один PostgreSQL, где у каждого проекта своя роль и своя база. Caddy ходит к фронтенду по внешней Docker-сети `proxy`, бэкенд к PostgreSQL — по внешней сети `db`; ни бэкенд, ни база не публикуют порты наружу. Nginx внутри фронтенда раздаёт SPA и проксирует `/api` на бэкенд — фронтенд и API работают на одном origin, CORS не нужен.
 
-Секреты репозитория: `SERVER_HOST`, `SERVER_USER`, `SSH_KEY`. На сервере нужен `/srv/apexrate/.env`.
+Секреты репозитория: `SERVER_HOST`, `SERVER_USER`, `SSH_KEY`. На сервере нужен `/srv/apexrate/.env`. Пошаговая настройка сервера: [deploy/README.md](deploy/README.md).
 
 ## Технические решения
 
